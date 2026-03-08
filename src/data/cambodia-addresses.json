@@ -1,0 +1,370 @@
+{
+  "provinces": [
+    {
+      "code": "01",
+      "khmer": "ខេត្តបន្ទាយមានជ័យ",
+      "english": "Banteay Meanchey Province",
+      "districts": [
+        {
+          "code": "0101",
+          "khmer": "ស្រុកមង្គលបូរី",
+          "english": "Mongkol Borei District",
+          "type": "srok",
+          "communes": [
+            {
+              "code": "010101",
+              "khmer": "ឃុំមង្គលបូរី",
+              "english": "Mongkol Borei Commune",
+              "type": "kommun",
+              "villages": [
+                {"code": "010101001", "khmer": "ភូមិមង្គលបូរី", "english": "Mongkol Borei Village"},
+                {"code": "010101002", "khmer": "ភូមិត្នោត", "english": "Tnaot Village"},
+                {"code": "010101003", "khmer": "ភូមិក្បាលស្ពាន", "english": "Kbal Spean Village"}
+              ]
+            }
+          ]
+        },
+        {
+          "code": "0102",
+          "khmer": "ស្រុកភ្នំស្រុក",
+          "english": "Phnom Srok District",
+          "type": "srok",
+          "communes": []
+        },
+        {
+          "code": "0103",
+          "khmer": "ស្រុកព្រះនេត្រព្រះ",
+          "english": "Preah Netr Preah District",
+          "type": "srok",
+          "communes": []
+        },
+        {
+          "code": "0104",
+          "khmer": "ស្រុកអូរជ្រៅ",
+          "english": "Ou Chrov District",
+          "type": "srok",
+          "communes": []
+        },
+        {
+          "code": "0105",
+          "khmer": "ស្រុកស្វាយចេក",
+          "english": "Svay Chek District",
+          "type": "srok",
+          "communes": []
+        },
+        {
+          "code": "0106",
+          "khmer": "ស្រុកសិរីសោភ័ណ",
+          "english": "Serei Saophoan District",
+          "type": "srok",
+          "communes": []
+        },
+        {
+          "code": "0107",
+          "khmer": "ក្រុងសិរីសោភ័ណ",
+          "english": "Serei Saophoan City",
+          "type": "khan",
+          "communes": []
+        },
+        {
+          "code": "0108",
+          "khmer": "ស្រុកម៉ាឡៃ",
+          "english": "Malai District",
+          "type": "srok",
+          "communes": []
+        }
+      ]
+    },
+    {
+      "code": "02",
+      "khmer": "ខេត្តបាត់ដំបង",
+      "english": "Battambang Province",
+      "districts": [
+        {
+          "code": "0201",
+          "khmer": "ក្រុងបាត់ដំបង",
+          "english": "Battambang City",
+          "type": "khan",
+          "communes": []
+        },
+        {
+          "code": "0202",
+          "khmer": "ស្រុកឯកភ្នំ",
+          "english": "Ek Phnom District",
+          "type": "srok",
+          "communes": []
+        },
+        {
+          "code": "0203",
+          "khmer": "ស្រុកបាណន់",
+          "english": "Banon District",
+          "type": "srok",
+          "communes": []
+        }
+      ]
+    },
+    {
+      "code": "03",
+      "khmer": "ខេត្តកំពង់ចាម",
+      "english": "Kampong Cham Province",
+      "districts": [
+        {
+          "code": "0301",
+          "khmer": "ក្រុងកំពង់ចាម",
+          "english": "Kampong Cham City",
+          "type": "khan",
+          "communes": []
+        },
+        {
+          "code": "0302",
+          "khmer": "ស្រុកស្ទឹងត្រង់",
+          "english": "Stueng Trang District",
+          "type": "srok",
+          "communes": []
+        }
+      ]
+    },
+    {
+      "code": "04",
+      "khmer": "ខេត្តកំពង់ឆ្នាំង",
+      "english": "Kampong Chhnang Province",
+      "districts": []
+    },
+    {
+      "code": "05",
+      "khmer": "ខេត្តកំពង់ស្ពឺ",
+      "english": "Kampong Speu Province",
+      "districts": []
+    },
+    {
+      "code": "06",
+      "khmer": "ខេត្តកំពង់ធំ",
+      "english": "Kampong Thom Province",
+      "districts": []
+    },
+    {
+      "code": "07",
+      "khmer": "ខេត្តកំពត",
+      "english": "Kampot Province",
+      "districts": []
+    },
+    {
+      "code": "08",
+      "khmer": "ខេត្តកណ្ដាល",
+      "english": "Kandal Province",
+      "districts": []
+    },
+    {
+      "code": "09",
+      "khmer": "ខេត្តកោះកុង",
+      "english": "Koh Kong Province",
+      "districts": []
+    },
+    {
+      "code": "10",
+      "khmer": "ខេត្តក្រចេះ",
+      "english": "Kratie Province",
+      "districts": []
+    },
+    {
+      "code": "11",
+      "khmer": "ខេត្តមណ្ឌលគិរី",
+      "english": "Mondul Kiri Province",
+      "districts": []
+    },
+    {
+      "code": "12",
+      "khmer": "រាជធានីភ្នំពេញ",
+      "english": "Phnom Penh Capital",
+      "districts": [
+        {
+          "code": "1201",
+          "khmer": "ខណ្ឌចំការមន",
+          "english": "Chamkar Mon District",
+          "type": "khan",
+          "communes": [
+            {
+              "code": "120101",
+              "khmer": "សង្កាត់ទន្លេបាសាក់",
+              "english": "Tonle Bassac Ward",
+              "type": "sangkat",
+              "villages": [
+                {"code": "120101001", "khmer": "ភូមិថ្មី", "english": "Thmei Village"},
+                {"code": "120101002", "khmer": "ភូមិអូរបែកកាន", "english": "Ou Bek Khan Village"}
+              ]
+            }
+          ]
+        },
+        {
+          "code": "1202",
+          "khmer": "ខណ្ឌ៧មករា",
+          "english": "7 Makara District",
+          "type": "khan",
+          "communes": []
+        },
+        {
+          "code": "1203",
+          "khmer": "ខណ្ឌទួលគោក",
+          "english": "Tuol Kouk District",
+          "type": "khan",
+          "communes": []
+        },
+        {
+          "code": "1204",
+          "khmer": "ខណ្ឌដូនពេញ",
+          "english": "Doun Penh District",
+          "type": "khan",
+          "communes": []
+        },
+        {
+          "code": "1205",
+          "khmer": "ខណ្ឌពោធិ៍សែនជ័យ",
+          "english": "Pou Senchey District",
+          "type": "khan",
+          "communes": []
+        },
+        {
+          "code": "1206",
+          "khmer": "ខណ្ឌឫស្សីកែវ",
+          "english": "Russey Keo District",
+          "type": "khan",
+          "communes": []
+        },
+        {
+          "code": "1207",
+          "khmer": "ខណ្ឌសែនសុខ",
+          "english": "Sen Sok District",
+          "type": "khan",
+          "communes": []
+        },
+        {
+          "code": "1208",
+          "khmer": "ខណ្ឌមានជ័យ",
+          "english": "Mean Chey District",
+          "type": "khan",
+          "communes": []
+        },
+        {
+          "code": "1209",
+          "khmer": "ខណ្ឌដង្កោ",
+          "english": "Dangkao District",
+          "type": "khan",
+          "communes": []
+        },
+        {
+          "code": "1210",
+          "khmer": "ខណ្ឌកំបូល",
+          "english": "Kamboul District",
+          "type": "khan",
+          "communes": []
+        },
+        {
+          "code": "1211",
+          "khmer": "ខណ្ឌច្បារអំពៅ",
+          "english": "Chbar Ampov District",
+          "type": "khan",
+          "communes": []
+        },
+        {
+          "code": "1212",
+          "khmer": "ខណ្ឌព្រែកព្នៅ",
+          "english": "Prek Pnov District",
+          "type": "khan",
+          "communes": []
+        },
+        {
+          "code": "1213",
+          "khmer": "ខណ្ឌជ្រោយចង្វារ",
+          "english": "Chroy Changvar District",
+          "type": "khan",
+          "communes": []
+        },
+        {
+          "code": "1214",
+          "khmer": "ខណ្ឌព្រែកប្រសព្វ",
+          "english": "Prek Prasab District",
+          "type": "khan",
+          "communes": []
+        }
+      ]
+    },
+    {
+      "code": "13",
+      "khmer": "ខេត្តព្រះវិហារ",
+      "english": "Preah Vihear Province",
+      "districts": []
+    },
+    {
+      "code": "14",
+      "khmer": "ខេត្តព្រៃវែង",
+      "english": "Prey Veng Province",
+      "districts": []
+    },
+    {
+      "code": "15",
+      "khmer": "ខេត្តពោធិ៍សាត់",
+      "english": "Pursat Province",
+      "districts": []
+    },
+    {
+      "code": "16",
+      "khmer": "ខេត្តរតនគិរី",
+      "english": "Ratanak Kiri Province",
+      "districts": []
+    },
+    {
+      "code": "17",
+      "khmer": "ខេត្តសៀមរាប",
+      "english": "Siemreap Province",
+      "districts": []
+    },
+    {
+      "code": "18",
+      "khmer": "ខេត្តព្រះសីហនុ",
+      "english": "Preah Sihanouk Province",
+      "districts": []
+    },
+    {
+      "code": "19",
+      "khmer": "ខេត្តស្ទឹងត្រែង",
+      "english": "Stung Treng Province",
+      "districts": []
+    },
+    {
+      "code": "20",
+      "khmer": "ខេត្តស្វាយរៀង",
+      "english": "Svay Rieng Province",
+      "districts": []
+    },
+    {
+      "code": "21",
+      "khmer": "ខេត្តតាកែវ",
+      "english": "Takeo Province",
+      "districts": []
+    },
+    {
+      "code": "22",
+      "khmer": "ខេត្តឧត្ដរមានជ័យ",
+      "english": "Oddar Meanchey Province",
+      "districts": []
+    },
+    {
+      "code": "23",
+      "khmer": "ខេត្តកែប",
+      "english": "Kep Province",
+      "districts": []
+    },
+    {
+      "code": "24",
+      "khmer": "ខេត្តប៉ៃលិន",
+      "english": "Pailin Province",
+      "districts": []
+    },
+    {
+      "code": "25",
+      "khmer": "ខេត្តត្បូងឃ្មុំ",
+      "english": "Tboung Khmum Province",
+      "districts": []
+    }
+  ]
+}
