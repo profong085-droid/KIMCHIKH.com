@@ -97,35 +97,59 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
     const orderNumber = `ORD-${Date.now()}`;
     const date = new Date().toLocaleString();
 
-    // Format cart items
-    const itemsList = items.map(item => 
-      `• ${item.name}\n  Quantity: ${item.quantity} × $${item.price.toFixed(2)} = $${(item.price * item.quantity).toFixed(2)}`
-    ).join("\n\n");
-
-    // Create message - Escape special markdown characters to prevent parsing errors
-    const escapeMarkdown = (text: string) => {
+    // Create beautifully formatted message with enhanced structure
+   const escapeMarkdown = (text: string) => {
       return text.replace(/[_*\[\]()~`>#+\-=|{}.!]/g, '\\$&');
     };
 
-    const message = 
-      '🛍️ *NEW ORDER - KIMCHI SHOP* 🛍️\n\n' +
-      '📋 *Order Details:*\n' +
-      'Order Number: `' + orderNumber + '`\n' +
-      'Date: ' + date + '\n\n' +
-      '🛒 *Items:*\n' +
-      itemsList + '\n\n' +
-      '💰 *Payment Summary:*\n' +
-      'Subtotal: $' + totalPrice.toFixed(2) + '\n' +
-      'Total: $' + totalPrice.toFixed(2) + '\n\n' +
-      '👤 *Customer Information:*\n' +
-      'Name: ' + escapeMarkdown(formData.fullName) + '\n' +
-      'Email: ' + escapeMarkdown(formData.email) + '\n' +
-      'Phone: ' + escapeMarkdown(formData.phone) + '\n' +
-      'Telegram Phone: ' + escapeMarkdown(formData.telegramPhone) + '\n\n' +
-      '📝 *Notes:*\n' +
-      (formData.notes ? escapeMarkdown(formData.notes) : 'No additional notes') + '\n\n' +
-      '────────────────────\n' +
-      'Thank you for your order!';
+   const header= 
+      '╔══════════════════════════════════╗\n' +
+      '║  🛍️ *NEW ORDER - KIMCHI SHOP* 🛍️   ║\n' +
+      '╚══════════════════════════════════╝\n\n';
+
+   const orderInfo = 
+      '📋 *ORDER INFORMATION*\n' +
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n' +
+      `🏷️ Order ID: \`${orderNumber}\`\n` +
+      `📅 Date: ${date}\n\n`;
+
+   const itemsSection = 
+      '🛒 *PURCHASE DETAILS*\n' +
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
+    
+   const itemsListFormatted = items.map((item, index) => 
+      `*${index +1}. ${item.name}*\\n` +
+      `   ├─ 📦 Qty: ${item.quantity}\\n` +
+      `   └─ 💵 $${item.price.toFixed(2)} × ${item.quantity} = *$${(item.price * item.quantity).toFixed(2)}*`
+    ).join('\\n\\n');
+
+   const paymentSection = 
+      '\n\n💰 *PAYMENT SUMMARY*\n' +
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n' +
+      `   Subtotal: *$${totalPrice.toFixed(2)}*\n` +
+      `   ────────────────────────\n` +
+      `   💳 *TOTAL: $${totalPrice.toFixed(2)}*\n` +
+      `   ────────────────────────\n\n`;
+
+   const customerSection = 
+      '👤 *CUSTOMER DETAILS*\n' +
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n' +
+      `   👤 Name: ${escapeMarkdown(formData.fullName)}\n` +
+      `   📧 Email: ${escapeMarkdown(formData.email)}\n` +
+      `   📱 Phone: ${escapeMarkdown(formData.phone)}\n` +
+      `   ✈️ Telegram: ${escapeMarkdown(formData.telegramPhone)}\n\n`;
+
+   const notesSection = 
+      '📝 *NOTES*\n' +
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n' +
+      `   ${escapeMarkdown(formData.notes || 'No additional notes')}\n\n`;
+
+   const footer= 
+      '╔══════════════════════════════════╗\n' +
+      '║  ✅ *Thank you for your order!*  ║\n' +
+      '╚══════════════════════════════════╝';
+
+   const message = header + orderInfo + itemsSection + itemsListFormatted + paymentSection + customerSection + notesSection + footer;
 
     try {
       const response = await fetch(
