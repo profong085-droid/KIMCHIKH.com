@@ -97,59 +97,59 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
     const orderNumber = `ORD-${Date.now()}`;
     const date = new Date().toLocaleString();
 
-    // Create beautifully formatted message with enhanced structure
-   const escapeMarkdown = (text: string) => {
-      return text.replace(/[_*\[\]()~`>#+\-=|{}.!]/g, '\\$&');
-    };
+    // Create clean modern message format - EASY TO READ
+ const escapeMarkdown = (text: string) => {
+ return text.replace(/[_*\[\]()~`>#+\-=|{}.!]/g, '\\$&');
+ };
 
-   const header= 
-      '╔══════════════════════════════════╗\n' +
-      '║  🛍️ *NEW ORDER - KIMCHI SHOP* 🛍️   ║\n' +
-      '╚══════════════════════════════════╝\n\n';
+ const message = 
+  '🛍️ *KIMCHI SHOP - NEW ORDER* 🛍️\n' +
+  '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n' +
+  '*ORDER DETAILS*\n' +
+  '┌──────────────────────────────┐\n' +
+  '│ 🏷️ ID: `' + orderNumber + '`\n' +
+  '│ 📅 ' + date + '\n' +
+  '└──────────────────────────────┘\n\n' +
+  '*WHAT THEY BOUGHT*';
 
-   const orderInfo = 
-      '📋 *ORDER INFORMATION*\n' +
-      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n' +
-      `🏷️ Order ID: \`${orderNumber}\`\n` +
-      `📅 Date: ${date}\n\n`;
+ const itemsListFormatted = items.map((item, index) => 
+  '\n*' + (index +1) + '. ' + item.name + '*\n' +
+  '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n' +
+  '   Quantity: ' + item.quantity + '\n' +
+  '   Unit Price: $' + item.price.toFixed(2) + '\n' +
+  '   ───────────────────────────\n' +
+  '   *Subtotal: $' + (item.price * item.quantity).toFixed(2) + '*'
+ ).join('\n');
 
-   const itemsSection = 
-      '🛒 *PURCHASE DETAILS*\n' +
-      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
-    
-   const itemsListFormatted = items.map((item, index) => 
-      `*${index +1}. ${item.name}*\\n` +
-      `   ├─ 📦 Qty: ${item.quantity}\\n` +
-      `   └─ 💵 $${item.price.toFixed(2)} × ${item.quantity} = *$${(item.price * item.quantity).toFixed(2)}*`
-    ).join('\\n\\n');
+ const paymentSection= 
+  '\n\n*PAYMENT BREAKDOWN*\n' +
+  '┌──────────────────────────────┐\n' +
+  '│ 💵 Subtotal: $' + totalPrice.toFixed(2) + '\n' +
+  '│ ────────────────────────────\n' +
+  '│ *💳 TOTAL: $' + totalPrice.toFixed(2) + '*\n' +
+  '└──────────────────────────────┘\n\n';
 
-   const paymentSection = 
-      '\n\n💰 *PAYMENT SUMMARY*\n' +
-      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n' +
-      `   Subtotal: *$${totalPrice.toFixed(2)}*\n` +
-      `   ────────────────────────\n` +
-      `   💳 *TOTAL: $${totalPrice.toFixed(2)}*\n` +
-      `   ────────────────────────\n\n`;
+ const customerSection= 
+  '*CUSTOMER INFORMATION*\n' +
+  '┌──────────────────────────────┐\n' +
+  '│ 👤 *Name:* ' + escapeMarkdown(formData.fullName) + '\n' +
+  '│ 📧 *Email:* ' + escapeMarkdown(formData.email) + '\n' +
+  '│ 📱 *Phone:* ' + escapeMarkdown(formData.phone) + '\n' +
+  '│ ✈️ *Telegram:* ' + escapeMarkdown(formData.telegramPhone) + '\n' +
+  '└──────────────────────────────┘\n\n';
 
-   const customerSection = 
-      '👤 *CUSTOMER DETAILS*\n' +
-      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n' +
-      `   👤 Name: ${escapeMarkdown(formData.fullName)}\n` +
-      `   📧 Email: ${escapeMarkdown(formData.email)}\n` +
-      `   📱 Phone: ${escapeMarkdown(formData.phone)}\n` +
-      `   ✈️ Telegram: ${escapeMarkdown(formData.telegramPhone)}\n\n`;
+ const notesSection = 
+  '*ADDITIONAL NOTES*\n' +
+  '┌──────────────────────────────┐\n' +
+  '│ ' + (escapeMarkdown(formData.notes || 'No additional notes')) + '\n' +
+  '└──────────────────────────────┘\n\n';
 
-   const notesSection = 
-      '📝 *NOTES*\n' +
-      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n' +
-      `   ${escapeMarkdown(formData.notes || 'No additional notes')}\n\n`;
+ const footer= 
+  '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n' +
+  '✅ *Thank you for shopping with us!*\n' +
+  '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━';
 
-   const footer= 
-      '╔══════════════════════════════════╗\n' +
-      '║  ✅ *Thank you for your order!*  ║\n' +
-      '╚══════════════════════════════════╝';
-
-   const message = header + orderInfo + itemsSection + itemsListFormatted + paymentSection + customerSection + notesSection + footer;
+ const fullMessage = message + itemsListFormatted + paymentSection + customerSection + notesSection + footer;
 
     try {
       const response = await fetch(
@@ -161,7 +161,7 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
           },
           body: JSON.stringify({
             chat_id: TELEGRAM_CHAT_ID,
-            text: message,
+            text: fullMessage,
             parse_mode: "Markdown",
           }),
         }
