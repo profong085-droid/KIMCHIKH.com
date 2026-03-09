@@ -96,9 +96,11 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
   const date = new Date().toLocaleString();
 
     try {
-      // Generate receipt image and send ONLY image to Telegram
+      // Wait a bit for receipt to render, then generate and send ONLY image to Telegram
+      await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms for render
+      
       if (receiptRef.current) {
-      const canvas = await html2canvas(receiptRef.current, {
+     const canvas = await html2canvas(receiptRef.current, {
            backgroundColor: '#1a1a1a',
            scale: 2,
            useCORS: true,
@@ -111,7 +113,7 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
          canvas.toBlob(async (blob: Blob | null) => {
            if (blob) {
              // Create FormData for photo upload
-           const formDataImage = new FormData();
+          const formDataImage = new FormData();
              formDataImage.append('chat_id', TELEGRAM_CHAT_ID.toString());
              formDataImage.append('photo', blob, 'receipt.png');
              formDataImage.append('caption', 
@@ -129,7 +131,7 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
              formDataImage.append('parse_mode', 'Markdown');
 
              // Send ONLY photo to Telegram (no text message)
-           const photoResponse = await fetch(
+          const photoResponse = await fetch(
                `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`,
                {
                  method: "POST",
@@ -137,11 +139,11 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
                }
              );
 
-           const photoData = await photoResponse.json();
+          const photoData = await photoResponse.json();
              
              if (photoData.ok) {
                // Success - image sent!
-            const generatedOrderNumber = `ORD-${Date.now()}`;
+           const generatedOrderNumber = `ORD-${Date.now()}`;
                setOrderNumber(generatedOrderNumber);
                setStep("success");
                clearCart();
@@ -160,15 +162,20 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
               setError(`Failed to send receipt image: ${photoData.description}`);
                setStep("form");
              }
+           } else {
+            setError('Failed to generate receipt image');
+             setStep("form");
            }
          }, 'image/png');
        } else {
-        setError('Receipt not available');
+      console.error('Receipt ref is null:', receiptRef.current);
+        setError('Receipt not ready yet. Please try again.');
          setStep("form");
        }
      } catch (err) {
-       setError("Failed to connect to Telegram. Please try again.");
-       setStep("form");
+    console.error('Telegram error:', err);
+      setError("Failed to connect to Telegram. Please try again.");
+      setStep("form");
      }
   };
 
