@@ -92,150 +92,84 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
       return;
     }
 
-   const orderNum = `ORD-${Date.now()}`;
-   const date = new Date().toLocaleString();
-
-    // First, send text notification
-   const escapeMarkdown = (text: string) => {
-      return text.replace(/[_*\[\]()~`>#+\-=|{}.!]/g, '\\$&');
-    };
-
-   const message = 
-      '🛍️ *KIMCHI SHOP - NEW ORDER* 🛍️\n' +
-      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n' +
-      '*ORDER DETAILS*\n' +
-      '┌──────────────────────────────┐\n' +
-      '│ 🏷️ ID: `' + orderNum + '`\n' +
-      '│ 📅 ' + date + '\n' +
-      '└──────────────────────────────┘\n\n' +
-      '*WHAT THEY BOUGHT*';
-
-   const itemsListFormatted = items.map((item, index) => 
-      '\n*' + (index +1) + '. ' + item.name + '*\n' +
-      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n' +
-      '   Quantity: ' + item.quantity + '\n' +
-      '   Unit Price: $' + item.price.toFixed(2) + '\n' +
-      '   ───────────────────────────\n' +
-      '   *Subtotal: $' + (item.price * item.quantity).toFixed(2) + '*'
-    ).join('\n');
-
-   const paymentSection= 
-      '\n\n*PAYMENT BREAKDOWN*\n' +
-      '┌──────────────────────────────┐\n' +
-      '│ 💵 Subtotal: $' + totalPrice.toFixed(2) + '\n' +
-      '│ ────────────────────────────\n' +
-      '│ *💳 TOTAL: $' + totalPrice.toFixed(2) + '*\n' +
-      '└──────────────────────────────┘\n\n';
-
-   const customerSection = 
-      '*CUSTOMER INFORMATION*\n' +
-      '┌──────────────────────────────┐\n' +
-      '│ 👤 *Name:* ' + escapeMarkdown(formData.fullName) + '\n' +
-      '│ 📧 *Email:* ' + escapeMarkdown(formData.email) + '\n' +
-      '│ 📱 *Phone:* ' + escapeMarkdown(formData.phone) + '\n' +
-      '│ ✈️ *Telegram:* ' + escapeMarkdown(formData.telegramPhone) + '\n' +
-      '└──────────────────────────────┘\n\n';
-
-   const notesSection = 
-      '*ADDITIONAL NOTES*\n' +
-      '┌──────────────────────────────┐\n' +
-      '│ ' + (escapeMarkdown(formData.notes || 'No additional notes')) + '\n' +
-      '└──────────────────────────────┘\n\n';
-
-   const footer= 
-      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n' +
-      '✅ *Thank you for shopping with us!*\n' +
-      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━';
-
-   const fullMessage = message + itemsListFormatted + paymentSection + customerSection + notesSection + footer;
+  const orderNum = `ORD-${Date.now()}`;
+  const date = new Date().toLocaleString();
 
     try {
-      // Step 1: Send text message first
-     const textResponse = await fetch(
-        `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            chat_id: TELEGRAM_CHAT_ID,
-            text: fullMessage,
-            parse_mode: "Markdown",
-          }),
-        }
-      );
-
-     const textData = await textResponse.json();
-
-      if (!textData.ok) {
-        setError(`Failed to send order: ${textData.description}`);
-        setStep("form");
-        return;
-      }
-
-      // Step 2: Generate and send receipt image
+      // Generate receipt image and send ONLY image to Telegram
       if (receiptRef.current) {
-        try {
-         const canvas = await html2canvas(receiptRef.current, {
-            backgroundColor: '#1a1a1a',
-            scale: 2,
-            useCORS: true,
-            logging: false,
-            width: 600,
-            height: 800
-          });
+      const canvas = await html2canvas(receiptRef.current, {
+           backgroundColor: '#1a1a1a',
+           scale: 2,
+           useCORS: true,
+           logging: false,
+           width: 600,
+           height: 800
+         });
 
-          // Convert canvas to blob
-          canvas.toBlob(async (blob: Blob | null) => {
-            if (blob) {
-              // Create FormData for photo upload
-             const formDataImage = new FormData();
-              formDataImage.append('chat_id', TELEGRAM_CHAT_ID.toString());
-              formDataImage.append('photo', blob, 'receipt.png');
-              formDataImage.append('caption', `🧾 Order Receipt - ${orderNum}\n\n✅ Payment Confirmed\n💰 Total: $${totalPrice.toFixed(2)}`);
+         // Convert canvas to blob
+         canvas.toBlob(async (blob: Blob | null) => {
+           if (blob) {
+             // Create FormData for photo upload
+           const formDataImage = new FormData();
+             formDataImage.append('chat_id', TELEGRAM_CHAT_ID.toString());
+             formDataImage.append('photo', blob, 'receipt.png');
+             formDataImage.append('caption', 
+               `🧾 *ORDER RECEIPT*\n` +
+               `━━━━━━━━━━━━━━━━━━━\n\n` +
+               `🏷️ Order: \`${orderNum}\`\n` +
+               `📅 ${date}\n\n` +
+               `💰 *Total Paid: $${totalPrice.toFixed(2)}*\n\n` +
+               `✅ Payment Confirmed\n` +
+               `🛍️ KIMCHI SHOP\n\n` +
+               `👤 Customer: ${formData.fullName}\n` +
+               `📱 Phone: ${formData.phone}\n` +
+               `✈️ Telegram: ${formData.telegramPhone}`
+             );
+             formDataImage.append('parse_mode', 'Markdown');
 
-              // Send photo to Telegram
-             const photoResponse = await fetch(
-                `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`,
-                {
-                  method: "POST",
-                  body: formDataImage,
-                }
-              );
+             // Send ONLY photo to Telegram (no text message)
+           const photoResponse = await fetch(
+               `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`,
+               {
+                 method: "POST",
+                 body: formDataImage,
+               }
+             );
 
-             const photoData = await photoResponse.json();
-              
-              if (!photoData.ok) {
-               console.error('Failed to send receipt image:', photoData.description);
-              }
-            }
-          }, 'image/png');
-        } catch (error) {
-         console.error('Failed to generate receipt image:', error);
-        }
-      }
-
-      // Success!
-     const generatedOrderNumber = `ORD-${Date.now()}`;
-      setOrderNumber(generatedOrderNumber);
-      setStep("success");
-      clearCart();
-      setTimeout(() => {
-        setStep("form");
-        setFormData({
-          fullName: "",
-          email: "",
-          phone: "",
-          telegramPhone: "",
-          notes: ""
-        });
-        setOrderNumber("");
-      }, 60000);
-    } catch (err) {
-      setError("Failed to connect to Telegram. Please try again.");
-      setStep("form");
-    }
+           const photoData = await photoResponse.json();
+             
+             if (photoData.ok) {
+               // Success - image sent!
+            const generatedOrderNumber = `ORD-${Date.now()}`;
+               setOrderNumber(generatedOrderNumber);
+               setStep("success");
+               clearCart();
+               setTimeout(() => {
+                 setStep("form");
+                 setFormData({
+                   fullName: "",
+                   email: "",
+                   phone: "",
+                   telegramPhone: "",
+                   notes: ""
+                 });
+                 setOrderNumber("");
+               }, 60000);
+             } else {
+              setError(`Failed to send receipt image: ${photoData.description}`);
+               setStep("form");
+             }
+           }
+         }, 'image/png');
+       } else {
+        setError('Receipt not available');
+         setStep("form");
+       }
+     } catch (err) {
+       setError("Failed to connect to Telegram. Please try again.");
+       setStep("form");
+     }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
