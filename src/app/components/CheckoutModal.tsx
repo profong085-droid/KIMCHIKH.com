@@ -66,7 +66,6 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
   };
 
   const sendToTelegram = async () => {
-    // Validate Chat ID is configured
     if (!TELEGRAM_CHAT_ID || String(TELEGRAM_CHAT_ID).trim() === "") {
       setError(
         "⚠️ Telegram Chat ID not configured!\n\n" +
@@ -80,7 +79,6 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
       return;
     }
 
-    // Validate Chat ID format (should not be the bot's own ID)
     if (String(TELEGRAM_CHAT_ID) === "8793518758") {
       setError(
         "❌ Invalid Chat ID!\n\n" +
@@ -94,65 +92,66 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
       return;
     }
 
-    const orderNumber = `ORD-${Date.now()}`;
-    const date = new Date().toLocaleString();
+   const orderNum = `ORD-${Date.now()}`;
+   const date = new Date().toLocaleString();
 
-    // Create clean modern message format - EASY TO READ
- const escapeMarkdown = (text: string) => {
- return text.replace(/[_*\[\]()~`>#+\-=|{}.!]/g, '\\$&');
- };
+    // First, send text notification
+   const escapeMarkdown = (text: string) => {
+      return text.replace(/[_*\[\]()~`>#+\-=|{}.!]/g, '\\$&');
+    };
 
- const message = 
-  '🛍️ *KIMCHI SHOP - NEW ORDER* 🛍️\n' +
-  '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n' +
-  '*ORDER DETAILS*\n' +
-  '┌──────────────────────────────┐\n' +
-  '│ 🏷️ ID: `' + orderNumber + '`\n' +
-  '│ 📅 ' + date + '\n' +
-  '└──────────────────────────────┘\n\n' +
-  '*WHAT THEY BOUGHT*';
+   const message = 
+      '🛍️ *KIMCHI SHOP - NEW ORDER* 🛍️\n' +
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n' +
+      '*ORDER DETAILS*\n' +
+      '┌──────────────────────────────┐\n' +
+      '│ 🏷️ ID: `' + orderNum + '`\n' +
+      '│ 📅 ' + date + '\n' +
+      '└──────────────────────────────┘\n\n' +
+      '*WHAT THEY BOUGHT*';
 
- const itemsListFormatted = items.map((item, index) => 
-  '\n*' + (index +1) + '. ' + item.name + '*\n' +
-  '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n' +
-  '   Quantity: ' + item.quantity + '\n' +
-  '   Unit Price: $' + item.price.toFixed(2) + '\n' +
-  '   ───────────────────────────\n' +
-  '   *Subtotal: $' + (item.price * item.quantity).toFixed(2) + '*'
- ).join('\n');
+   const itemsListFormatted = items.map((item, index) => 
+      '\n*' + (index +1) + '. ' + item.name + '*\n' +
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n' +
+      '   Quantity: ' + item.quantity + '\n' +
+      '   Unit Price: $' + item.price.toFixed(2) + '\n' +
+      '   ───────────────────────────\n' +
+      '   *Subtotal: $' + (item.price * item.quantity).toFixed(2) + '*'
+    ).join('\n');
 
- const paymentSection= 
-  '\n\n*PAYMENT BREAKDOWN*\n' +
-  '┌──────────────────────────────┐\n' +
-  '│ 💵 Subtotal: $' + totalPrice.toFixed(2) + '\n' +
-  '│ ────────────────────────────\n' +
-  '│ *💳 TOTAL: $' + totalPrice.toFixed(2) + '*\n' +
-  '└──────────────────────────────┘\n\n';
+   const paymentSection= 
+      '\n\n*PAYMENT BREAKDOWN*\n' +
+      '┌──────────────────────────────┐\n' +
+      '│ 💵 Subtotal: $' + totalPrice.toFixed(2) + '\n' +
+      '│ ────────────────────────────\n' +
+      '│ *💳 TOTAL: $' + totalPrice.toFixed(2) + '*\n' +
+      '└──────────────────────────────┘\n\n';
 
- const customerSection= 
-  '*CUSTOMER INFORMATION*\n' +
-  '┌──────────────────────────────┐\n' +
-  '│ 👤 *Name:* ' + escapeMarkdown(formData.fullName) + '\n' +
-  '│ 📧 *Email:* ' + escapeMarkdown(formData.email) + '\n' +
-  '│ 📱 *Phone:* ' + escapeMarkdown(formData.phone) + '\n' +
-  '│ ✈️ *Telegram:* ' + escapeMarkdown(formData.telegramPhone) + '\n' +
-  '└──────────────────────────────┘\n\n';
+   const customerSection = 
+      '*CUSTOMER INFORMATION*\n' +
+      '┌──────────────────────────────┐\n' +
+      '│ 👤 *Name:* ' + escapeMarkdown(formData.fullName) + '\n' +
+      '│ 📧 *Email:* ' + escapeMarkdown(formData.email) + '\n' +
+      '│ 📱 *Phone:* ' + escapeMarkdown(formData.phone) + '\n' +
+      '│ ✈️ *Telegram:* ' + escapeMarkdown(formData.telegramPhone) + '\n' +
+      '└──────────────────────────────┘\n\n';
 
- const notesSection = 
-  '*ADDITIONAL NOTES*\n' +
-  '┌──────────────────────────────┐\n' +
-  '│ ' + (escapeMarkdown(formData.notes || 'No additional notes')) + '\n' +
-  '└──────────────────────────────┘\n\n';
+   const notesSection = 
+      '*ADDITIONAL NOTES*\n' +
+      '┌──────────────────────────────┐\n' +
+      '│ ' + (escapeMarkdown(formData.notes || 'No additional notes')) + '\n' +
+      '└──────────────────────────────┘\n\n';
 
- const footer= 
-  '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n' +
-  '✅ *Thank you for shopping with us!*\n' +
-  '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━';
+   const footer= 
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n' +
+      '✅ *Thank you for shopping with us!*\n' +
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━';
 
- const fullMessage = message + itemsListFormatted + paymentSection + customerSection + notesSection + footer;
+   const fullMessage = message + itemsListFormatted + paymentSection + customerSection + notesSection + footer;
 
     try {
-      const response = await fetch(
+      // Step 1: Send text message first
+     const textResponse = await fetch(
         `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
         {
           method: "POST",
@@ -167,29 +166,72 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
         }
       );
 
-      const data = await response.json();
+     const textData = await textResponse.json();
 
-      if (data.ok) {
-        const generatedOrderNumber = `ORD-${Date.now()}`;
-        setOrderNumber(generatedOrderNumber);
-        setStep("success");
-        clearCart();
-        setTimeout(() => {
-          // Don't auto-close, let user download receipt first
-          setStep("form");
-          setFormData({
-            fullName: "",
-            email: "",
-            phone: "",
-            telegramPhone: "",
-            notes: ""
-          });
-          setOrderNumber("");
-        }, 60000); // Close after 60 seconds so user can download receipt
-      } else {
-        setError(`Failed to send order: ${data.description}`);
+      if (!textData.ok) {
+        setError(`Failed to send order: ${textData.description}`);
         setStep("form");
+        return;
       }
+
+      // Step 2: Generate and send receipt image
+      if (receiptRef.current) {
+        try {
+         const canvas = await html2canvas(receiptRef.current, {
+            backgroundColor: '#1a1a1a',
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            width: 600,
+            height: 800
+          });
+
+          // Convert canvas to blob
+          canvas.toBlob(async (blob: Blob | null) => {
+            if (blob) {
+              // Create FormData for photo upload
+             const formDataImage = new FormData();
+              formDataImage.append('chat_id', TELEGRAM_CHAT_ID.toString());
+              formDataImage.append('photo', blob, 'receipt.png');
+              formDataImage.append('caption', `🧾 Order Receipt - ${orderNum}\n\n✅ Payment Confirmed\n💰 Total: $${totalPrice.toFixed(2)}`);
+
+              // Send photo to Telegram
+             const photoResponse = await fetch(
+                `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`,
+                {
+                  method: "POST",
+                  body: formDataImage,
+                }
+              );
+
+             const photoData = await photoResponse.json();
+              
+              if (!photoData.ok) {
+               console.error('Failed to send receipt image:', photoData.description);
+              }
+            }
+          }, 'image/png');
+        } catch (error) {
+         console.error('Failed to generate receipt image:', error);
+        }
+      }
+
+      // Success!
+     const generatedOrderNumber = `ORD-${Date.now()}`;
+      setOrderNumber(generatedOrderNumber);
+      setStep("success");
+      clearCart();
+      setTimeout(() => {
+        setStep("form");
+        setFormData({
+          fullName: "",
+          email: "",
+          phone: "",
+          telegramPhone: "",
+          notes: ""
+        });
+        setOrderNumber("");
+      }, 60000);
     } catch (err) {
       setError("Failed to connect to Telegram. Please try again.");
       setStep("form");
