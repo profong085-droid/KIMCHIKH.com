@@ -1,8 +1,10 @@
 import { useState, useRef } from "react";
-import { motion, AnimatePresence } from "motion/react";
-import { X, ShoppingBag, CreditCard } from "lucide-react";
-import { useCart } from "../context/CartContext";
+import { motion, AnimatePresence} from "motion/react";
+import { X, ShoppingBag, CreditCard, Save} from "lucide-react";
+import {useCart} from "../context/CartContext";
+import {useAuth} from "../context/AuthContext";
 import html2canvas from 'html2canvas';
+import {SaveOrderModal} from './SaveOrderModal';
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -17,6 +19,7 @@ const TELEGRAM_CHAT_ID = "-1003800534856";
 
 export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
   const { items, totalPrice, clearCart } = useCart();
+  const { saveOrder} = useAuth();
   const [step, setStep] = useState<"form" | "processing" | "success">("form");
   const [formData, setFormData] = useState({
     fullName: "",
@@ -28,6 +31,7 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
   const [error, setError] = useState("");
   const receiptRef = useRef<HTMLDivElement>(null);
   const [orderNumber, setOrderNumber] = useState("");
+  const [showSaveModal, setShowSaveModal] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -67,7 +71,7 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
 
   const sendToTelegram = async () => {
     if (!TELEGRAM_CHAT_ID || String(TELEGRAM_CHAT_ID).trim() === "") {
-      setError(
+     setError(
         "⚠️ Telegram Chat ID not configured!\n\n" +
         "Please open src/app/components/CheckoutModal.tsx and set your Telegram Chat ID.\n\n" +
         "To get your Chat ID:\n" +
@@ -80,7 +84,7 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
     }
 
     if (String(TELEGRAM_CHAT_ID) === "8793518758") {
-      setError(
+     setError(
         "❌ Invalid Chat ID!\n\n" +
         "You're using the BOT'S ID instead of YOUR user ID.\n\n" +
         "To fix:\n" +
@@ -96,87 +100,250 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
   const date = new Date().toLocaleString();
 
     try {
-      // Wait a bit for receipt to render, then generate and send ONLY image to Telegram
-      await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms for render
-      
-      if (receiptRef.current) {
-     const canvas = await html2canvas(receiptRef.current, {
-           backgroundColor: '#1a1a1a',
-           scale: 2,
-           useCORS: true,
-           logging: false,
-           width: 600,
-           height: 800
-         });
+  console.log('📤 Generating order PNG with product images:', orderNum);
+   
+   // Load product images as base64
+  const loadImage = (imgSrc: string) => {
+ return new Promise<string | null>((resolve) => {
+  const img = new Image();
+   img.crossOrigin = 'anonymous';
+   img.onload = () => {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+   if (ctx) {
+  canvas.width = 60;
+  canvas.height = 60;
+   ctx.drawImage(img, 0, 0, 60, 60);
+   resolve(canvas.toDataURL('image/png'));
+   } else {
+   resolve(null);
+   }
+  };
+  img.onerror = () => resolve(null);
+  img.src = imgSrc;
+  });
+  };
+  
+ const productImages = await Promise.all(
+  items.map(item => loadImage(item.image))
+  );
 
-         // Convert canvas to blob
-         canvas.toBlob(async (blob: Blob | null) => {
-           if (blob) {
-             // Create FormData for photo upload
-          const formDataImage = new FormData();
-             formDataImage.append('chat_id', TELEGRAM_CHAT_ID.toString());
-             formDataImage.append('photo', blob, 'receipt.png');
-             formDataImage.append('caption', 
-               `🧾 *ORDER RECEIPT*\n` +
-               `━━━━━━━━━━━━━━━━━━━\n\n` +
-               `🏷️ Order: \`${orderNum}\`\n` +
-               `📅 ${date}\n\n` +
-               `💰 *Total Paid: $${totalPrice.toFixed(2)}*\n\n` +
-               `✅ Payment Confirmed\n` +
-               `🛍️ KIMCHI SHOP\n\n` +
-               `👤 Customer: ${formData.fullName}\n` +
-               `📱 Phone: ${formData.phone}\n` +
-               `✈️ Telegram: ${formData.telegramPhone}`
-             );
-             formDataImage.append('parse_mode', 'Markdown');
+ // Calculate items per page (A4 portrait - 3 items per page)
+ const itemsPerPage = 3;
+ const totalPages = Math.ceil(items.length / itemsPerPage);
 
-             // Send ONLY photo to Telegram (no text message)
-          const photoResponse = await fetch(
-               `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`,
-               {
-                 method: "POST",
-                 body: formDataImage,
-               }
-             );
+ // Create array to hold all page canvases
+ const pageCanvases: HTMLCanvasElement[] = [];
 
-          const photoData = await photoResponse.json();
-             
-             if (photoData.ok) {
-               // Success - image sent!
-           const generatedOrderNumber = `ORD-${Date.now()}`;
-               setOrderNumber(generatedOrderNumber);
-               setStep("success");
-               clearCart();
-               setTimeout(() => {
-                 setStep("form");
-                 setFormData({
-                   fullName: "",
-                   email: "",
-                   phone: "",
-                   telegramPhone: "",
-                   notes: ""
-                 });
-                 setOrderNumber("");
-               }, 60000);
-             } else {
-              setError(`Failed to send receipt image: ${photoData.description}`);
-               setStep("form");
-             }
-           } else {
-            setError('Failed to generate receipt image');
-             setStep("form");
-           }
-         }, 'image/png');
-       } else {
-      console.error('Receipt ref is null:', receiptRef.current);
-        setError('Receipt not ready yet. Please try again.');
-         setStep("form");
-       }
-     } catch (err) {
-    console.error('Telegram error:', err);
-      setError("Failed to connect to Telegram. Please try again.");
-      setStep("form");
-     }
+ for (let pageNum = 0; pageNum < totalPages; pageNum++) {
+  const startItem = pageNum * itemsPerPage;
+  const endItem = Math.min(startItem + itemsPerPage, items.length);
+  const itemsOnPage = endItem - startItem;
+
+  // Create canvas for this page
+  const tempCanvas = document.createElement('canvas');
+  const ctx = tempCanvas.getContext('2d');
+  
+  if (!ctx) {
+  console.error('❌ Cannot get canvas context');
+ return;
+  }
+  
+  // Calculate dimensions - A4 ratio: 800 x 1130 minimum
+  const width = 800;
+  const baseHeight = 1130;
+  const height = baseHeight;
+
+  tempCanvas.width = width;
+  tempCanvas.height = height;
+
+  // Fill background
+  ctx.fillStyle = '#1a1a1a';
+  ctx.fillRect(0, 0, width, height);
+
+  // Draw header
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 22px monospace';
+  ctx.fillText('🛍️ KIMCHI SHOP - NEW ORDER 🛍️', 20, 40);
+  ctx.fillText('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 20, 70);
+
+  // Order details
+  ctx.font = '16px monospace';
+  ctx.fillText(`ORDER DETAILS`, 20, 115);
+  ctx.fillText(`┌──────────────────────────────┐`, 20, 138);
+  ctx.fillText(`│ 🏷️ ID: ${orderNum}`, 20, 161);
+  ctx.fillText(`│ 📅 ${date}`, 20, 184);
+  ctx.fillText(`└──────────────────────────────┘`, 20, 207);
+
+  // Items with images
+  let y = 250;
+  ctx.font = '16px monospace';
+  ctx.fillText(`WHAT THEY BOUGHT`, 20, y);
+  y += 45;
+
+  // Draw items for this page only
+ for (let i = startItem; i < endItem; i++) {
+  const item = items[i];
+  const index = i;
+
+  // Draw item number and name
+  ctx.font = 'bold 16px monospace';
+  ctx.fillText(`${index + 1}. ${item.name}`, 20, y);
+  y += 30;
+
+  // Draw horizontal line
+  ctx.fillText('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 20, y);
+  y += 35;
+
+  // Draw product image if available
+  if (productImages[index]) {
+  const img = new Image();
+ img.src = productImages[index] as string;
+  ctx.drawImage(img, 30, y - 10, 60, 60);
+  }
+
+  // Draw item details next to image
+  ctx.font = '16px monospace';
+  ctx.fillText(`   Quantity: ${item.quantity}`, 100, y);
+  y += 35;
+  ctx.fillText(`   Unit Price: $${item.price.toFixed(2)}`, 100, y);
+  y += 35;
+  ctx.fillText(`   Subtotal: $${(item.price * item.quantity).toFixed(2)}`, 100, y);
+  y += 35;
+  }
+
+  // Payment breakdown (only on last page)
+  if (pageNum === totalPages - 1) {
+  ctx.font = 'bold 16px monospace';
+  ctx.fillText(`PAYMENT BREAKDOWN`, 20, y);
+  y += 30;
+  ctx.fillText(`┌──────────────────────────────┐`, 20, y);
+  y += 23;
+  ctx.fillText(`│ 💵 Subtotal: $${totalPrice.toFixed(2)}`, 20, y);
+  y += 23;
+  ctx.fillText(`│ ────────────────────────────`, 20, y);
+  y += 23;
+  ctx.fillText(`│ 💳 TOTAL: $${totalPrice.toFixed(2)}`, 20, y);
+  y += 23;
+  ctx.fillText(`└──────────────────────────────┘`, 20, y);
+  y += 45;
+
+  // Customer info
+  ctx.font = 'bold 16px monospace';
+  ctx.fillText(`CUSTOMER INFORMATION`, 20, y);
+  y += 30;
+  ctx.fillText(`┌──────────────────────────────┐`, 20, y);
+  y += 23;
+  ctx.fillText(`│ 👤 Name: ${formData.fullName}`, 20, y);
+  y += 23;
+  ctx.fillText(`│ 📧 Email: ${formData.email}`, 20, y);
+  y += 23;
+  ctx.fillText(`│ 📱 Phone: ${formData.phone}`, 20, y);
+  y += 23;
+  ctx.fillText(`│ ✈️ Telegram: ${formData.telegramPhone}`, 20, y);
+  y += 23;
+  ctx.fillText(`└──────────────────────────────┘`, 20, y);
+  y += 45;
+
+  // Footer
+  ctx.font = 'bold 16px monospace';
+  ctx.fillText('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 20, y);
+  y += 30;
+  ctx.fillText('✅ Thank you for shopping with us!', 20, y);
+  y += 30;
+  ctx.fillText('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 20, y);
+  } else {
+  // Continue on next page indicator
+  ctx.font = 'bold 16px monospace';
+  ctx.fillText('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 20, y);
+  y += 30;
+  ctx.fillText(`➡️ Continued on page ${pageNum + 2}...`, 20, y);
+  y += 30;
+  ctx.fillText('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 20, y);
+  }
+
+  pageCanvases.push(tempCanvas);
+ }
+
+ // Send all pages to Telegram
+ for (let pageNum = 0; pageNum < pageCanvases.length; pageNum++) {
+  const canvas = pageCanvases[pageNum];
+  
+  // Convert to blob
+  await new Promise<void>((resolve) => {
+  canvas.toBlob(async (blob: Blob | null) => {
+  if (!blob) {
+  console.error('❌ Failed to create receipt image');
+ resolve();
+ return;
+  }
+  
+  console.log(`📤 Sending page ${pageNum + 1} of ${pageCanvases.length} to Telegram...`);
+    
+    // Create FormData for photo upload
+  const formDataImage = new FormData();
+    formDataImage.append('chat_id', TELEGRAM_CHAT_ID.toString());
+    formDataImage.append('photo', blob, `Order_${orderNum}_Page${pageNum + 1}.png`);
+    
+    let caption = `🧾 ORDER RECEIPT\n`;
+    caption += `━━━━━━━━━━━━━━━━━━━\n\n`;
+    caption += `🏷️ Order: \`${orderNum}\`\n`;
+    caption += `💰 Total: $${totalPrice.toFixed(2)}\n\n`;
+    
+    if (totalPages > 1) {
+     caption += `📄 Page ${pageNum + 1} of ${totalPages}\n\n`;
+    }
+    
+    caption += `✅ Payment Confirmed\n`;
+    caption += `🛍️ KIMCHI SHOP`;
+    
+    formDataImage.append('caption', caption);
+    formDataImage.append('parse_mode', 'Markdown');
+
+    // Send photo to Telegram
+  const photoResponse = await fetch(
+         `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`,
+         {
+           method: "POST",
+           body: formDataImage,
+         }
+       );
+
+  const photoData = await photoResponse.json();
+         
+    if (photoData.ok) {
+  console.log(`✅ Page ${pageNum + 1} sent successfully!`);
+    } else {
+  console.error(`❌ Failed to send page ${pageNum + 1}:`, photoData.description);
+    }
+    
+    resolve();
+  }, 'image/png');
+  });
+ }
+
+ // After sending all pages
+ const generatedOrderNumber= `ORD-${Date.now()}`;
+ setOrderNumber(generatedOrderNumber);
+ setStep("success");
+ clearCart();
+ setTimeout(() => {
+  setStep("form");
+  setFormData({
+             fullName: "",
+             email: "",
+             phone: "",
+             telegramPhone: "",
+             notes: ""
+           });
+  setOrderNumber("");
+ }, 60000);
+
+   } catch (err) {
+ console.error('❌ Telegram error:', err);
+  setError("Failed to connect to Telegram. Please try again.");
+  setStep("form");
+   }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -198,6 +365,7 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
   };
 
   return (
+    <>
     <AnimatePresence>
       {isOpen && (
         <>
@@ -526,14 +694,24 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
 
                   {/* Download Receipt Button */}
                   <button
-                    onClick={() => downloadReceiptAsImage()}
+                  onClick={() => downloadReceiptAsImage()}
                     className="w-full py-4 bg-blue-600 text-white text-sm tracking-widest hover:bg-blue-500 transition-colors flex items-center justify-center gap-2 mb-3"
                     style={{ fontFamily: "Impact, 'Arial Black', sans-serif" }}
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5"fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                     </svg>
                     DOWNLOAD RECEIPT (Save as Image)
+                  </button>
+
+                  {/* Save to Account Button */}
+                  <button
+                  onClick={() => setShowSaveModal(true)}
+                    className="w-full py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white text-sm tracking-widest transition-colors flex items-center justify-center gap-2 mb-3"
+                    style={{ fontFamily: "Impact, 'Arial Black', sans-serif" }}
+                  >
+                    <Save size={18} />
+                    SAVE ORDER TO MY ACCOUNT
                   </button>
 
                   {/* Instructions */}
@@ -562,5 +740,18 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
         </>
       )}
     </AnimatePresence>
+    
+    {/* Save Order Modal */}
+    <SaveOrderModal 
+   isOpen={showSaveModal}
+   onClose={() => setShowSaveModal(false)}
+      orderData={orderNumber? {
+        items,
+        totalPrice,
+        customer: formData,
+        orderNumber
+      } : undefined}
+    />
+    </>
   );
 }
