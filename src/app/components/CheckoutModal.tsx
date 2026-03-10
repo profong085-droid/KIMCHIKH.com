@@ -5,6 +5,7 @@ import {useCart} from "../context/CartContext";
 import {useAuth} from "../context/AuthContext";
 import html2canvas from 'html2canvas';
 import {SaveOrderModal} from './SaveOrderModal';
+import {PaymentPopup} from './PaymentPopup';
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -20,7 +21,7 @@ const TELEGRAM_CHAT_ID = "-1003800534856";
 export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
   const { items, totalPrice, clearCart } = useCart();
   const { saveOrder} = useAuth();
-  const [step, setStep] = useState<"form" | "processing" | "success">("form");
+  const [step, setStep] = useState<"form" | "processing" | "payment" | "success">("form");
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -32,6 +33,7 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
   const receiptRef = useRef<HTMLDivElement>(null);
   const [orderNumber, setOrderNumber] = useState("");
   const [showSaveModal, setShowSaveModal] = useState(false);
+  const [showPaymentPopup, setShowPaymentPopup] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -356,12 +358,23 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
     }
 
     setError("");
+    // Show KHQR payment popup instead of processing immediately
+    setShowPaymentPopup(true);
+  };
+
+  const handlePaymentConfirm = () => {
+    // User has completed payment via KHQR
     setStep("processing");
+    setShowPaymentPopup(false);
     
     // Simulate processing delay then send to Telegram
     setTimeout(() => {
       sendToTelegram();
     }, 1500);
+  };
+
+  const handlePromoCodeClick = () => {
+    console.log('Promo code clicked - implement promo logic here');
   };
 
   return (
@@ -584,6 +597,9 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
                     COMPLETE ORDER — ${totalPrice.toFixed(2)}
                   </button>
 
+                  <p className="text-white/40 text-xs text-center mt-4">
+                    🔒 Secure payment with KHQR
+                  </p>
                   <p className="text-white/40 text-xs text-center">
                     By completing this order, you agree to our Terms of Service and Privacy Policy
                   </p>
@@ -740,6 +756,15 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
         </>
       )}
     </AnimatePresence>
+    
+    {/* KHQR Payment Popup */}
+    <PaymentPopup
+   isOpen={showPaymentPopup}
+   onClose={() => setShowPaymentPopup(false)}
+      amount={totalPrice * 4000} // Convert USD to KHR (assuming $1 = 4000៛)
+   onPaymentConfirm={handlePaymentConfirm}
+   onPromoCodeClick={handlePromoCodeClick}
+    />
     
     {/* Save Order Modal */}
     <SaveOrderModal 
