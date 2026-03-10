@@ -191,11 +191,6 @@ export function PaymentPopup({
             {paymentStatus === 'PAID' ? 'ទូទាត់ប្រាក់' : 'រង់ចាំការទូទាត់...'}
           </Button>
 
-          {/* Promo Code Input */}
-          <div className="mb-6">
-            <p className="text-center text-gray-500 text-sm">ការទូទាត់ដោយ KHQR មិនត្រូវការលេខកូដបញ្ចុះតម្លៃទេ</p>
-          </div>
-
           {/* Security Notice */}
           <p className="text-center text-xs text-gray-400 mt-4">
             🔒 ការទូទាត់មានសុវត្ថិភាព 100%
