@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { ShoppingBag, X, ArrowRight, Filter, Plus } from "lucide-react";
+import { ShoppingBag, X, ArrowRight, Filter, Plus, Zap } from "lucide-react";
 import { Ticker } from "../components/Ticker";
-import { useCart } from "../context/CartContext";
+import {useCart } from "../context/CartContext";
+import {PaymentPopup} from "../components/PaymentPopup";
 import goods1Img from "../../assets/Goods1.jpg";
 import goods2Img from "../../assets/Goods2.jpg";
 import goods3Img from "../../assets/Goods3.jpg";
@@ -139,6 +140,8 @@ export function Shop() {
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [selectedColor, setSelectedColor] = useState<string>("");
   const [quantity, setQuantity] = useState(1);
+  const [showBuyNowPopup, setShowBuyNowPopup] = useState(false);
+  const [buyNowProduct, setBuyNowProduct] = useState<Product | null>(null);
   const { addToCart } = useCart();
   
   // Lazy loading state for better performance
@@ -165,10 +168,29 @@ export function Shop() {
     : products.filter(p => p.category === selectedCategory);
 
   const handleQuickView = (product: Product) => {
-    setSelectedProduct(product);
-    setSelectedSize(product.sizes?.[0] || "");
-    setSelectedColor(product.colors?.[0]?.name || "");
-    setQuantity(1);
+   setSelectedProduct(product);
+   setSelectedSize(product.sizes?.[0] || "");
+   setSelectedColor(product.colors?.[0]?.name || "");
+   setQuantity(1);
+  };
+
+  const handleBuyNow = (product: Product) => {
+   setBuyNowProduct(product);
+   setShowBuyNowPopup(true);
+  };
+
+  const handlePaymentConfirm = () => {
+    // Add product to cart and proceed with checkout
+  if (buyNowProduct) {
+    addToCart({
+    id: buyNowProduct.id,
+     name: buyNowProduct.name,
+     price: buyNowProduct.price,
+      image: buyNowProduct.image,
+     });
+    }
+   setShowBuyNowPopup(false);
+    // TODO: Redirect to checkout or show success page
   };
 
   const handleAddToCart = (e?: React.MouseEvent, product?: Product, fromModal: boolean = false) => {
@@ -334,6 +356,34 @@ export function Shop() {
                         <>
                           <Plus size={14} />
                           <span>ADD TO CART</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Buy Now Button - Always Visible */}
+                  <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 via-black/50 to-transparent">
+                    <button 
+                      onClick={(e) => {
+                       e.stopPropagation();
+                      handleBuyNow(product);
+                       }}
+                      disabled={addedToCart === product.id}
+                      className={`w-full py-3 text-white text-xs tracking-widest transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 ${
+                        addedToCart === product.id
+                          ? 'bg-green-600 cursor-default'
+                          : 'bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700'
+                      }`}
+                     style={{ fontFamily: "Impact, 'Arial Black', sans-serif" }}>
+                      {addedToCart === product.id ? (
+                        <>
+                          <span>✓</span>
+                          <span>ADDED!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Zap size={14} />
+                          <span>BUY NOW</span>
                         </>
                       )}
                     </button>
@@ -593,6 +643,16 @@ export function Shop() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Buy Now Payment Popup */}
+      {buyNowProduct && (
+        <PaymentPopup
+        isOpen={showBuyNowPopup}
+        onClose={() => setShowBuyNowPopup(false)}
+        amount={buyNowProduct.price * 4000}
+        onPaymentConfirm={handlePaymentConfirm}
+        />
+      )}
     </div>
   );
 }
