@@ -1,5 +1,17 @@
 /// <reference types="vite/client" />
 
+interface ImportMetaEnv {
+  readonly VITE_SUPABASE_URL: string;
+  readonly VITE_SUPABASE_ANON_KEY: string;
+  // add other env vars here as needed
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
+}
+
+/// <reference types="vite/client" />
+
 // Declare image file extensions as valid imports
 declare module '*.jpg';
 declare module '*.jpeg';

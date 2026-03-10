@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { Instagram, Youtube, Facebook, Twitter, Music, Send } from "lucide-react";
+import { Instagram, Youtube, Facebook, Twitter, Music, Send, Mail } from "lucide-react";
 import { Ticker } from "./Ticker";
 
 const socials = [
@@ -19,6 +19,12 @@ const socials = [
     icon: Send, 
     label: "Telegram", 
     href: "https://t.me/meOnlyFong",
+    target: "_blank"
+  },
+  { 
+    icon: Mail, 
+    label: "Email", 
+    href: "mailto:your@gmail.com",
     target: "_blank"
   },
   { icon: Instagram, label: "Instagram", href: "#" },

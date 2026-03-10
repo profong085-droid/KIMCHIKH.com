@@ -1,180 +1,161 @@
-import { createContext, useContext, useState, useEffect, ReactNode} from 'react';
-import {
- auth,
- googleProvider,
- signInWithGoogle,
- loginWithEmail as firebaseLogin,
- signupWithEmail,
- logout as firebaseLogout,
- onAuthChange
-} from '../../firebase';
-import { User as FirebaseUser} from 'firebase/auth';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import type { User, Session } from '@supabase/supabase-js';
+import { auth, db } from '../../lib/supabase';
 
-interface User {
-  email: string;
-  name?: string;
-  avatar?: string;
-  uid: string;
-}
+type SavedOrderItem = {
+  id: number;
+  name: string;
+  price: number;
+  quantity: number;
+  image: string;
+};
 
-interface SavedOrder {
+export type SavedOrder = {
   id: string;
   orderNumber: string;
   date: string;
-  items: Array<{
-    id: number;
-    name: string;
-    price: number;
-    quantity: number;
-    image: string;
-  }>;
+  items: SavedOrderItem[];
   totalPrice: number;
-  customer: {
-    fullName: string;
-    email: string;
-    phone: string;
-    telegramPhone: string;
-    notes: string;
-  };
-  status: 'pending' | 'completed' | 'cancelled';
-}
+};
 
 interface AuthContextType {
   user: User | null;
+  session: Session | null;
+  loading: boolean;
   isAuthenticated: boolean;
-  loginWithGoogle: () => Promise<void>;
-  loginWithEmail: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  signInWithGoogle: () => Promise<void>;
+  signOut: () => Promise<void>;
   savedOrders: SavedOrder[];
-  saveOrder: (order: Omit<SavedOrder, 'id'>) => void;
-  deleteOrder: (orderId: string) => void;
-  isLoading: boolean;
+  saveOrder: (order: {
+    orderNumber: string;
+    date: string;
+    items: SavedOrderItem[];
+    totalPrice: number;
+    customer: {
+      fullName: string;
+      email: string;
+      phone: string;
+      telegramPhone: string;
+      notes: string;
+    };
+    status: string;
+  }) => Promise<void>;
+  deleteOrder: (orderId: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
   const [savedOrders, setSavedOrders] = useState<SavedOrder[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
-  // Load user and orders from localStorage on mount
   useEffect(() => {
-    // Listen to Firebase auth state changes
-    const unsubscribe = onAuthChange((firebaseUser: FirebaseUser | null) => {
-      if (firebaseUser) {
-        const user: User = {
-         email: firebaseUser.email || '',
-          name: firebaseUser.displayName || firebaseUser.email?.split('@')[0],
-          avatar: firebaseUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User')}&background=random`,
-          uid: firebaseUser.uid
-        };
-        setUser(user);
-        localStorage.setItem('kimchi_user', JSON.stringify(user));
-        
-        // Load saved orders for this user
-        const storedOrders = localStorage.getItem(`kimchi_orders_${firebaseUser.uid}`);
-        if (storedOrders) {
-          setSavedOrders(JSON.parse(storedOrders));
-        }
-      } else {
-        setUser(null);
-        localStorage.removeItem('kimchi_user');
-        setSavedOrders([]);
-      }
-      setIsLoading(false);
+    auth.getCurrentUser().then((currentUser: User | null) => {
+      setUser(currentUser);
     });
 
-   return () => unsubscribe();
+    const {
+      data: { subscription },
+    } = auth.onAuthStateChange(async (_event: string, newSession: Session | null) => {
+      console.log('Auth event:', _event);
+      setSession(newSession);
+      const currentUser = newSession?.user ?? null;
+      setUser(currentUser);
+      setLoading(false);
+
+      if (currentUser?.id) {
+        try {
+          const rows = await db.getUserOrders(currentUser.id);
+          const mapped: SavedOrder[] = rows.map((row: any) => ({
+            id: row.id,
+            orderNumber: row.order_number ?? row.orderNumber ?? '',
+            date: row.created_at ?? new Date().toISOString(),
+            items: (row.items ?? []) as SavedOrderItem[],
+            totalPrice: Number(row.total_amount ?? row.totalPrice ?? 0),
+          }));
+          setSavedOrders(mapped);
+        } catch (err) {
+          console.error('Failed to load user orders:', err);
+        }
+      } else {
+        setSavedOrders([]);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
-  // Save orders to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem('kimchi_orders', JSON.stringify(savedOrders));
-  }, [savedOrders]);
-
-  const loginWithGoogle = async () => {
+  const signInWithGoogle = async () => {
     try {
-      await signInWithGoogle();
-      // Auth state change will handle user setup
+      await auth.signInWithGoogle();
     } catch (error) {
-      console.error("Google login error:", error);
+      console.error('Error signing in with Google:', error);
       throw error;
     }
   };
 
-  const loginWithEmail = async (email: string, password: string) => {
+  const signOut = async () => {
     try {
-      await firebaseLogin(email, password);
-      // Auth state change will handle user setup
+      await auth.signOut();
+      setSavedOrders([]);
     } catch (error) {
-      console.error("Email login error:", error);
+      console.error('Error signing out:', error);
       throw error;
     }
   };
 
-  const signupWithEmailAndPass = async (email: string, password: string) => {
-    try {
-      await signupWithEmail(email, password);
-      // Auth state change will handle user setup
-    } catch (error) {
-      console.error("Signup error:", error);
-      throw error;
+  const saveOrder: AuthContextType['saveOrder'] = async (order) => {
+    if (!user?.id) {
+      throw new Error('Must be logged in to save order');
     }
+
+    const row = await db.saveOrder({
+      userId: user.id,
+      items: order.items,
+      totalAmount: order.totalPrice,
+      customerInfo: order.customer,
+      paymentMethod: 'KHQR',
+      paymentStatus: order.status,
+      screenshotUrl: undefined,
+    });
+
+    const mapped: SavedOrder = {
+      id: row.id,
+      orderNumber: row.order_number ?? order.orderNumber,
+      date: row.created_at ?? order.date,
+      items: (row.items ?? order.items) as SavedOrderItem[],
+      totalPrice: Number(row.total_amount ?? order.totalPrice),
+    };
+
+    setSavedOrders((prev) => [mapped, ...prev]);
   };
 
-  const logout = async () => {
-   try {
-     await firebaseLogout();
-     setUser(null);
-     localStorage.removeItem('kimchi_user');
-     setSavedOrders([]);
-   } catch (error) {
-     console.error("Logout error:", error);
-   }
+  const deleteOrder: AuthContextType['deleteOrder'] = async (orderId) => {
+    try {
+      await db.updateOrderStatus(orderId, 'deleted');
+    } catch (err) {
+      console.error('Failed to update order status in database:', err);
+    }
+    setSavedOrders((prev) => prev.filter((order) => order.id !== orderId));
   };
 
-  const saveOrder = (order: Omit<SavedOrder, 'id'>) => {
-   if (!user) return;
-   
-   const newOrder: SavedOrder = {
-     ...order,
-     id: `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-   };
-   
-   setSavedOrders(prev => {
-     const updated = [newOrder, ...prev];
-     // Save to localStorage with user UID
-     localStorage.setItem(`kimchi_orders_${user.uid}`, JSON.stringify(updated));
-   return updated;
-   });
+  const value: AuthContextType = {
+    user,
+    session,
+    loading,
+    isAuthenticated: !!user,
+    signInWithGoogle,
+    signOut,
+    savedOrders,
+    saveOrder,
+    deleteOrder,
   };
 
-  const deleteOrder= (orderId: string) => {
-   if (!user) return;
-   
-   setSavedOrders(prev => {
-     const updated = prev.filter(order => order.id !== orderId);
-     localStorage.setItem(`kimchi_orders_${user.uid}`, JSON.stringify(updated));
-   return updated;
-   });
-  };
-
- return (
-    <AuthContext.Provider value={{
-      user,
-      isAuthenticated: !!user,
-      loginWithGoogle,
-      loginWithEmail,
-      logout,
-      savedOrders,
-      saveOrder,
-      deleteOrder,
-      isLoading
-    }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
@@ -182,5 +163,5 @@ export function useAuth() {
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
- return context;
+  return context;
 }

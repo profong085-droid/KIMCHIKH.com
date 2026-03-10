@@ -1,8 +1,7 @@
 import { motion, AnimatePresence} from "motion/react";
-import { X, Save, Mail, LogIn, User, LogOut, History, Trash2} from "lucide-react";
+import { X, Save, Mail, LogOut, History, Trash2} from "lucide-react";
 import {useAuth} from "../context/AuthContext";
 import {useState} from 'react';
-import {signupWithEmail} from '../../firebase';
 
 interface SaveOrderModalProps {
   isOpen: boolean;
@@ -28,11 +27,7 @@ interface SaveOrderModalProps {
 }
 
 export function SaveOrderModal({ isOpen, onClose, orderData }: SaveOrderModalProps) {
-  const {user, isAuthenticated, loginWithGoogle, loginWithEmail, logout, savedOrders, saveOrder, deleteOrder} = useAuth();
-  const [showLogin, setShowLogin] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [isSignup, setIsSignup] = useState(false);
+  const {user, isAuthenticated, signInWithGoogle, signOut, savedOrders, saveOrder, deleteOrder} = useAuth();
   const [showOrders, setShowOrders] = useState(false);
 
   const handleSaveOrder = async () => {
@@ -49,23 +44,6 @@ export function SaveOrderModal({ isOpen, onClose, orderData }: SaveOrderModalPro
     
     alert('✅ Order saved successfully to your account!');
    onClose();
-  };
-
-  const handleEmailAuth = async (e: React.FormEvent) => {
-   e.preventDefault();
-    try {
-      if (isSignup) {
-        await signupWithEmail(email, password);
-      } else {
-        await loginWithEmail(email, password);
-      }
-      setShowLogin(false);
-      setEmail('');
-      setPassword('');
-      setIsSignup(false);
-    } catch (error: any) {
-      alert(`❌ Error: ${error.message}`);
-    }
   };
 
  return (
@@ -119,30 +97,11 @@ export function SaveOrderModal({ isOpen, onClose, orderData }: SaveOrderModalPro
                     </div>
 
                     <button
-                      onClick={loginWithGoogle}
+                      onClick={signInWithGoogle}
                       className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3 px-4 rounded-lg flex items-center justify-center gap-3 transition-all"
                     >
                       <Mail size={20} />
-                      <span>Login with Email / Google</span>
-                    </button>
-
-                    <div className="relative">
-                      <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-white/10"></div>
-                      </div>
-                      <div className="relative flex justify-center text-xs uppercase">
-                        <span className="bg-gradient-to-br from-gray-900 to-black px-2 text-white/60">
-                          Or continue with
-                        </span>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={() => setShowLogin(true)}
-                      className="w-full bg-white/10 hover:bg-white/20 text-white py-3 px-4 rounded-lg flex items-center justify-center gap-3 transition-all"
-                    >
-                      <LogIn size={20} />
-                      <span>Email Account</span>
+                      <span>Login with Google</span>
                     </button>
                   </div>
                 ) : (
@@ -150,19 +109,21 @@ export function SaveOrderModal({ isOpen, onClose, orderData }: SaveOrderModalPro
                   <div className="space-y-4">
                     {/* User Profile */}
                     <div className="bg-white/5 border border-white/10 rounded-lg p-4 flex items-center gap-4">
-                      {user?.avatar && (
+                      {user?.user_metadata?.avatar_url && (
                         <img 
-                          src={user.avatar} 
-                          alt={user.name || 'User'} 
+                          src={user.user_metadata.avatar_url} 
+                          alt={user.user_metadata.full_name || user.email || 'User'} 
                           className="w-12 h-12 rounded-full"
                         />
                       )}
                       <div className="flex-1">
-                        <p className="text-white font-bold">{user?.name}</p>
+                        <p className="text-white font-bold">
+                          {user?.user_metadata?.full_name || user?.email}
+                        </p>
                         <p className="text-white/60 text-sm">{user?.email}</p>
                       </div>
                       <button
-                        onClick={logout}
+                        onClick={signOut}
                         className="text-red-400 hover:text-red-300 p-2"
                         title="Logout"
                       >
@@ -240,65 +201,6 @@ export function SaveOrderModal({ isOpen, onClose, orderData }: SaveOrderModalPro
                     )}
                   </div>
                 )}
-
-                {/* Email Login/Signup Form */}
-                {showLogin && (
-                  <form onSubmit={handleEmailAuth} className="space-y-4">
-                    <div className="text-center mb-2">
-                      <h3 className="text-white font-bold text-lg">
-                        {isSignup? 'Create Account' : 'Login with Email'}
-                      </h3>
-                      <p className="text-white/60 text-sm">
-                        {isSignup? 'Sign up with your real Gmail or email' : 'Login to your existing account'}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="block text-white/80 text-sm mb-2">Email Address</label>
-                      <input
-                        type="email"
-                        value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                       className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500"
-                       placeholder="your@gmail.com"
-                     />
-                   </div>
-                   <div>
-                     <label className="block text-white/80 text-sm mb-2">Password</label>
-                     <input
-                       type="password"
-                       value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                       minLength={6}
-                       className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500"
-                       placeholder="•••••••• (min 6 characters)"
-                     />
-                   </div>
-                   <button
-                     type="submit"
-                     className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3 px-4 rounded-lg transition-all"
-                   >
-                     {isSignup? '✅ Create Account' : '🔐 Login'}
-                   </button>
-                   <div className="text-center">
-                     <button
-                       type="button"
-                      onClick={() => setIsSignup(!isSignup)}
-                       className="text-blue-400 hover:text-blue-300 text-sm underline"
-                     >
-                       {isSignup? 'Already have an account? Login' : "Don't have an account? Sign Up"}
-                     </button>
-                   </div>
-                   <button
-                     type="button"
-                    onClick={() => setShowLogin(false)}
-                     className="w-full bg-white/10 hover:bg-white/20 text-white py-3 px-4 rounded-lg transition-all"
-                   >
-                     Cancel
-                   </button>
-                 </form>
-               )}
 
               </div>
             </div>

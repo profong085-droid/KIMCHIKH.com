@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { ShoppingBag, X, ArrowRight, Filter, Plus, Zap } from "lucide-react";
 import { Ticker } from "../components/Ticker";
-import {useCart } from "../context/CartContext";
-import {PaymentPopup} from "../components/PaymentPopup";
+import { useCart } from "../context/CartContext";
+import { useAuth } from "../context/AuthContext";
+import { GoogleSignInButton } from "../components/GoogleSignInButton";
+import { PaymentPopup } from "../components/PaymentPopup";
 import goods1Img from "../../assets/Goods1.jpg";
 import goods2Img from "../../assets/Goods2.jpg";
 import goods3Img from "../../assets/Goods3.jpg";
@@ -143,6 +145,7 @@ export function Shop() {
   const [showBuyNowPopup, setShowBuyNowPopup] = useState(false);
   const [buyNowProduct, setBuyNowProduct] = useState<Product | null>(null);
   const { addToCart } = useCart();
+  const { isAuthenticated } = useAuth();
   
   // Lazy loading state for better performance
   const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({});
@@ -220,6 +223,36 @@ export function Shop() {
       setTimeout(() => setAddedToCart(null), 1000);
     }
   };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="bg-black min-h-screen flex items-center justify-center px-4">
+        <div className="max-w-md w-full bg-white/5 border border-white/10 rounded-xl p-8 text-center">
+          <p
+            className="text-red-500 text-xs tracking-[0.3em] mb-3 uppercase"
+            style={{ fontFamily: "Impact, 'Arial Black', sans-serif" }}
+          >
+            ACCOUNT REQUIRED
+          </p>
+          <h1
+            className="text-3xl md:text-4xl text-white mb-4 leading-tight"
+            style={{ fontFamily: "Impact, 'Arial Black', sans-serif" }}
+          >
+            ចូលភ្ជាប់អ៊ីមែល
+            <br />
+            មុនពេលមើលទំនិញ
+          </h1>
+          <p className="text-white/60 text-sm mb-6">
+            សូមចូលគណនីរបស់អ្នកជាមួយ Google (Gmail) មុនពេលចូលមើល ឬទិញទំនិញក្នុង KIMCHI STORE។
+          </p>
+          <GoogleSignInButton />
+          <p className="text-white/30 text-[11px] mt-4">
+            ដោយចូលគណនី អ្នកអាចរក្សាទុកបញ្ជីកម្មង់ និងមើលប្រវត្តិការទិញទំនិញរបស់ខ្លួនបាន។
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-black min-h-screen">

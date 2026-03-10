@@ -2,7 +2,6 @@ import { useState, useRef } from "react";
 import { motion, AnimatePresence} from "motion/react";
 import { X, ShoppingBag, CreditCard, Save} from "lucide-react";
 import {useCart} from "../context/CartContext";
-import {useAuth} from "../context/AuthContext";
 import html2canvas from 'html2canvas';
 import {SaveOrderModal} from './SaveOrderModal';
 import {PaymentPopup} from './PaymentPopup';
@@ -20,7 +19,6 @@ const TELEGRAM_CHAT_ID = "-1003800534856";
 
 export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
   const { items, totalPrice, clearCart } = useCart();
-  const { saveOrder} = useAuth();
   const [step, setStep] = useState<"form" | "processing" | "payment" | "success">("form");
   const [formData, setFormData] = useState({
     fullName: "",
