@@ -293,16 +293,23 @@ export function Shop() {
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.3, delay: i * 0.05 }}
                 className="group cursor-pointer"
-                onMouseEnter={() => setHoveredProduct(product.id)}
-                onMouseLeave={() => setHoveredProduct(null)}
+               onMouseEnter={() => setHoveredProduct(product.id)}
+               onMouseLeave={() => setHoveredProduct(null)}
               >
-                <div className="relative overflow-hidden bg-white/5 border border-white/10 aspect-[3/4]">
+                <div 
+                 className="relative overflow-hidden bg-white/5 border border-white/10 aspect-[3/4]"
+                onClick={() => handleQuickView(product)}
+                >
                   {loadedImages[product.image] ? (
                     <img
                       src={product.image}
                       alt={product.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90 group-hover:opacity-100"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90 group-hover:opacity-100 cursor-pointer"
                       loading="lazy"
+                     onClick={(e) => {
+                       e.stopPropagation();
+                        handleQuickView(product);
+                      }}
                     />
                   ) : (
                     <div className="w-full h-full bg-white/5 animate-pulse" />
