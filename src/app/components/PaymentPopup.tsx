@@ -2,6 +2,7 @@ import {useState, useEffect } from 'react';
 import { X, Ticket, CheckCircle, Loader2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { createPaymentRequest, pollPaymentStatus, generateQRImage, cancelPayment, type PaymentStatus } from '../services/khqrPaymentService';
+import {PaymentVerificationModal} from './PaymentVerificationModal';
 
 interface PaymentPopupProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ export function PaymentPopup({
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus['status']>('PENDING');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>('');
+  const [showVerification, setShowVerification] = useState(false);
 
   // Initialize payment when popup opens
   useEffect(() => {
@@ -60,9 +62,9 @@ export function PaymentPopup({
           setPaymentStatus(status.status);
           
          if (status.status === 'PAID') {
-            // Payment completed!
-            setTimeout(() => {
-             onPaymentConfirm();
+            // Payment completed! Show verification modal
+           setTimeout(() => {
+            setShowVerification(true);
             }, 1000);
           }
         }
@@ -77,6 +79,14 @@ export function PaymentPopup({
 
   const formatAmount = (value: number) => {
    return value.toLocaleString('kh-KH') + '៛';
+  };
+
+  const handleVerificationConfirm = (screenshotUrl: string) => {
+   // Send screenshot to backend/Telegram
+  console.log('Screenshot uploaded:', screenshotUrl);
+   // TODO: Upload to server and send to Telegram
+  setShowVerification(false);
+  onPaymentConfirm();
   };
 
   if (!isOpen) return null;
@@ -184,7 +194,7 @@ export function PaymentPopup({
           className={`w-full py-4 sm:py-5 rounded-xl text-base sm:text-lg font-bold transition-all duration-300 ${
             paymentStatus === 'PAID'
               ? 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-2xl active:scale-95'
-              : 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg opacity-50 cursor-not-allowed'
+              : 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-600 hover:to-red-800 text-white shadow-lg opacity-50 cursor-not-allowed'
           }`}
         >
           <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 mr-2" />
@@ -199,4 +209,12 @@ export function PaymentPopup({
     </div>
   </div>
 );
+
+  {/* Payment Verification Modal */}
+  <PaymentVerificationModal
+ isOpen={showVerification}
+ onClose={() => setShowVerification(false)}
+ onConfirm={handleVerificationConfirm}
+ amount={amount}
+  />
 }
