@@ -759,11 +759,10 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
     
     {/* KHQR Payment Popup */}
     <PaymentPopup
-   isOpen={showPaymentPopup}
-   onClose={() => setShowPaymentPopup(false)}
-      amount={totalPrice * 4000} // Convert USD to KHR (assuming $1 = 4000៛)
-   onPaymentConfirm={handlePaymentConfirm}
-   onPromoCodeClick={handlePromoCodeClick}
+     isOpen={showPaymentPopup}
+     onClose={() => setShowPaymentPopup(false)}
+     amount={totalPrice * 4000}
+     onPaymentConfirm={handlePaymentConfirm}
     />
     
     {/* Save Order Modal */}

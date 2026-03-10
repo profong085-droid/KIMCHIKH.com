@@ -8,7 +8,6 @@ interface PaymentPopupProps {
   onClose: () => void;
   amount: number;
   onPaymentConfirm: () => void;
-  onPromoCodeClick: () => void;
 }
 
 export function PaymentPopup({ 
@@ -16,9 +15,7 @@ export function PaymentPopup({
   onClose, 
   amount, 
   onPaymentConfirm,
-  onPromoCodeClick 
 }: PaymentPopupProps) {
-  const [promoCode, setPromoCode] = useState('');
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
   const [transactionId, setTransactionId] = useState<string>('');
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus['status']>('PENDING');
@@ -182,29 +179,10 @@ export function PaymentPopup({
 
           {/* Promo Code Input */}
           <div className="mb-6">
-            <Button
-             onClick={onPromoCodeClick}
-              variant="outline"
-              className="w-full bg-gray-800 hover:bg-gray-900 text-white border-2 border-gray-700 py-4 text-base font-semibold transition-all duration-300"
-            >
-              <Ticket className="w-5 h-5 mr-2" />
-              បញ្ចូលលេខកូដប្រូម៉ូសិន
-            </Button>
+            <p className="text-center text-gray-500 text-sm">ការទូទាត់ដោយ KHQR មិនត្រូវការលេខកូដបញ្ចុះតម្លៃទេ</p>
           </div>
 
           {/* Payment Confirmation Button */}
-          <Button
-           onClick={onPaymentConfirm}
-            disabled={paymentStatus !== 'PAID'}
-            className={`w-full py-5 rounded-xl text-lg font-bold transition-all duration-300 transform ${
-              paymentStatus === 'PAID'
-                ? 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-2xl hover:-translate-y-1'
-                : 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg opacity-50 cursor-not-allowed'
-            }`}
-          >
-            <CheckCircle className="w-6 h-6 mr-2" />
-            {paymentStatus === 'PAID' ? 'ទូទាត់ប្រាក់' : 'រង់ចាំការទូទាត់...'}
-          </Button>
 
           {/* Security Notice */}
           <p className="text-center text-xs text-gray-400 mt-4">
