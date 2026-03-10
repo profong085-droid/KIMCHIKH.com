@@ -356,7 +356,7 @@ export function Shop() {
                           ? 'bg-green-600 cursor-default'
                           : 'bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700'
                       }`}
-                    style={{ fontFamily: "Impact, 'Arial Black', sans-serif" }}>
+                   style={{ fontFamily: "Impact, 'Arial Black', sans-serif" }}>
                       {addedToCart === product.id ? (
                         <>
                           <span>✓</span>
@@ -627,14 +627,12 @@ export function Shop() {
       </AnimatePresence>
 
       {/* Buy Now Payment Popup */}
-      {buyNowProduct && (
-        <PaymentPopup
-        isOpen={showBuyNowPopup}
-        onClose={() => setShowBuyNowPopup(false)}
-        amount={buyNowProduct.price * 4000}
-        onPaymentConfirm={handlePaymentConfirm}
-        />
-      )}
+      <PaymentPopup
+      isOpen={showBuyNowPopup}
+     onClose={() => setShowBuyNowPopup(false)}
+      amount={buyNowProduct ? buyNowProduct.price* 4000 : 0}
+     onPaymentConfirm={handlePaymentConfirm}
+      />
     </div>
   );
 }
