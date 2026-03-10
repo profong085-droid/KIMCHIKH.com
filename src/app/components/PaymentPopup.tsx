@@ -177,12 +177,24 @@ export function PaymentPopup({
             </div>
           </div>
 
+          {/* Payment Confirmation Button */}
+          <Button
+          onClick={onPaymentConfirm}
+            disabled={paymentStatus !== 'PAID'}
+            className={`w-full py-5 rounded-xl text-lg font-bold transition-all duration-300 transform ${
+              paymentStatus === 'PAID'
+                ? 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-2xl hover:-translate-y-1'
+                : 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-600 hover:to-red-800 text-white shadow-lg opacity-50 cursor-not-allowed'
+            }`}
+          >
+            <CheckCircle className="w-6 h-6 mr-2" />
+            {paymentStatus === 'PAID' ? 'ទូទាត់ប្រាក់' : 'រង់ចាំការទូទាត់...'}
+          </Button>
+
           {/* Promo Code Input */}
           <div className="mb-6">
             <p className="text-center text-gray-500 text-sm">ការទូទាត់ដោយ KHQR មិនត្រូវការលេខកូដបញ្ចុះតម្លៃទេ</p>
           </div>
-
-          {/* Payment Confirmation Button */}
 
           {/* Security Notice */}
           <p className="text-center text-xs text-gray-400 mt-4">
