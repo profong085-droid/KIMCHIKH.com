@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { X, Ticket, CheckCircle } from 'lucide-react';
+import {useState, useEffect } from 'react';
+import { X, Ticket, CheckCircle, Loader2 } from 'lucide-react';
 import { Button } from './ui/button';
+import { createPaymentRequest, pollPaymentStatus, generateQRImage, cancelPayment, type PaymentStatus } from '../services/khqrPaymentService';
 
 interface PaymentPopupProps {
   isOpen: boolean;
@@ -18,26 +19,84 @@ export function PaymentPopup({
   onPromoCodeClick 
 }: PaymentPopupProps) {
   const [promoCode, setPromoCode] = useState('');
+  const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
+  const [transactionId, setTransactionId] = useState<string>('');
+  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus['status']>('PENDING');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string>('');
+
+  // Initialize payment when popup opens
+  useEffect(() => {
+   if (isOpen) {
+      initializePayment();
+    }
+
+    // Cleanup on close
+   return () => {
+     if (transactionId) {
+        cancelPayment(transactionId);
+      }
+    };
+  }, [isOpen]);
+
+  const initializePayment = async () => {
+   try {
+      setIsLoading(true);
+      setError('');
+      
+      // Generate order ID
+     const orderId = `ORD-${Date.now()}`;
+      
+      // Create payment request to ABA Bank
+     const response = await createPaymentRequest(orderId, amount/ 4000); // Convert back to USD for API
+      
+      setTransactionId(response.transactionId);
+      
+      // Generate QR code image from KHQR string
+     const qrImageUrl = generateQRImage(response.qrString);
+      setQrCodeUrl(qrImageUrl);
+      
+      // Start polling for payment status
+      pollPaymentStatus(
+       response.transactionId,
+        (status) => {
+          setPaymentStatus(status.status);
+          
+         if (status.status === 'PAID') {
+            // Payment completed!
+            setTimeout(() => {
+             onPaymentConfirm();
+            }, 1000);
+          }
+        }
+      );
+    } catch (err) {
+     console.error('Failed to initialize payment:', err);
+      setError('Failed to load KHQR. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const formatAmount = (value: number) => {
+   return value.toLocaleString('kh-KH') + '៛';
+  };
 
   if (!isOpen) return null;
 
-  const formatAmount = (value: number) => {
-    return value.toLocaleString('kh-KH') + '៛';
-  };
-
-  return (
+ return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop overlay */}
       <div 
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
+       onClick={onClose}
       />
       
       {/* Pop-up container */}
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden animate-in fade-in zoom-in duration-300">
         {/* Close button */}
         <button
-          onClick={onClose}
+         onClick={onClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors z-10"
         >
           <X className="w-6 h-6" />
@@ -64,59 +123,67 @@ export function PaymentPopup({
 
           {/* QR Code Section */}
           <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-8 mb-8 shadow-inner border border-gray-200">
-            <div className="aspect-square bg-white rounded-2xl p-6 mb-6 shadow-lg">
-              {/* Placeholder for actual QR code */}
-              <div className="w-full h-full bg-white rounded-xl flex items-center justify-center relative overflow-hidden">
-                {/* Simulated QR Code Pattern with higher detail */}
-                <div className="absolute inset-6 grid grid-cols-8 gap-1.5">
-                  {Array.from({ length: 64 }).map((_, i) => {
-                    const row = Math.floor(i / 8);
-                    const col = i % 8;
-                    // Create corner markers and random pattern
-                    const isCornerMarker = 
-                      (row < 3 && col < 3) || 
-                      (row < 3 && col > 4) || 
-                      (row > 4 && col < 3);
-                    return (
-                      <div
-                        key={i}
-                        className={`rounded-sm ${
-                          isCornerMarker ? 'bg-gray-900' : 
-                          Math.random() > 0.5 ? 'bg-gray-900' : 'bg-transparent'
-                        }`}
-                      />
-                    );
-                  })}
+            <div className="aspect-square bg-white rounded-2xl p-6 mb-6 shadow-lg relative">
+              {/* Dynamic QR Code */}
+              {isLoading ? (
+                <div className="w-full h-full flex flex-col items-center justify-center">
+                  <Loader2 className="w-16 h-16 text-red-600 animate-spin mb-4" />
+                  <p className="text-gray-600 font-medium">កំពុងបង្កើត KHQR...</p>
                 </div>
-                
-                {/* Center Khmer Riel Symbol */}
-                <div className="absolute bg-gradient-to-br from-green-400 to-green-600 rounded-full p-3.5 shadow-xl border-4 border-white">
-                  <span className="text-white font-bold text-3xl drop-shadow-md">៛</span>
+              ) : error ? (
+                <div className="w-full h-full flex flex-col items-center justify-center text-center p-6">
+                  <p className="text-red-600 font-medium mb-4">⚠️ {error}</p>
+                  <Button onClick={initializePayment} variant="outline" className="text-sm">
+                    ព្យាយាមម្តងទៀត
+                  </Button>
                 </div>
-                
-                {/* Corner markers for QR scanner */}
-                <div className="absolute top-3 left-3 w-10 h-10 border-l-[6px] border-t-[6px] border-gray-900 rounded-tl-xl" />
-                <div className="absolute top-3 right-3 w-10 h-10 border-r-[6px] border-t-[6px] border-gray-900 rounded-tr-xl" />
-                <div className="absolute bottom-3 left-3 w-10 h-10 border-l-[6px] border-b-[6px] border-gray-900 rounded-bl-xl" />
-                <div className="absolute bottom-3 right-3 w-10 h-10 border-r-[6px] border-b-[6px] border-gray-900 rounded-br-xl" />
-              </div>
+              ) : qrCodeUrl ? (
+                <>
+                  <img 
+                   src={qrCodeUrl} 
+                    alt="KHQR Code" 
+                    className="w-full h-full object-contain"
+                  />
+                  {/* Center Khmer Riel Symbol Overlay */}
+                  <div className="absolute bg-gradient-to-br from-green-400 to-green-600 rounded-full p-3.5 shadow-xl border-4 border-white">
+                    <span className="text-white font-bold text-3xl drop-shadow-md">៛</span>
+                  </div>
+                </>
+              ) : null}
             </div>
             
             {/* Scan Instruction */}
             <div className="text-center space-y-2">
-              <p className="text-gray-800 font-semibold text-lg">
-                សូមស្កែន QR code នេះដើម្បីទូទាត់ប្រាក់
-              </p>
-              <p className="text-gray-500 text-base">
-                Scan this QR code to pay
-              </p>
+              {paymentStatus === 'PENDING' && (
+                <>
+                  <p className="text-gray-800 font-semibold text-lg">
+                    សូមស្កែន QR code នេះដើម្បីទូទាត់ប្រាក់
+                  </p>
+                  <p className="text-gray-500 text-base">
+                    Scan this QR code to pay
+                  </p>
+                  <div className="flex items-center justify-center gap-2 mt-3">
+                    <Loader2 className="w-4 h-4 text-green-600 animate-spin" />
+                    <p className="text-xs text-gray-500">កំពុងរង់ចាំការទូទាត់...</p>
+                  </div>
+                </>
+              )}
+              {paymentStatus === 'PAID' && (
+                <div className="flex items-center justify-center gap-2 text-green-600">
+                  <CheckCircle className="w-6 h-6" />
+                  <p className="font-bold text-lg">បានទូទាត់ជោគជ័យ!</p>
+                </div>
+              )}
+              {paymentStatus === 'FAILED' && (
+                <p className="text-red-600 font-semibold">ការទូទាត់បានបរាជ័យ</p>
+              )}
             </div>
           </div>
 
           {/* Promo Code Input */}
           <div className="mb-6">
             <Button
-              onClick={onPromoCodeClick}
+             onClick={onPromoCodeClick}
               variant="outline"
               className="w-full bg-gray-800 hover:bg-gray-900 text-white border-2 border-gray-700 py-4 text-base font-semibold transition-all duration-300"
             >
@@ -127,11 +194,16 @@ export function PaymentPopup({
 
           {/* Payment Confirmation Button */}
           <Button
-            onClick={onPaymentConfirm}
-            className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold py-5 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 text-lg"
+           onClick={onPaymentConfirm}
+            disabled={paymentStatus !== 'PAID'}
+            className={`w-full py-5 rounded-xl text-lg font-bold transition-all duration-300 transform ${
+              paymentStatus === 'PAID'
+                ? 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-2xl hover:-translate-y-1'
+                : 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg opacity-50 cursor-not-allowed'
+            }`}
           >
             <CheckCircle className="w-6 h-6 mr-2" />
-            ទូទាត់ប្រាក់
+            {paymentStatus === 'PAID' ? 'ទូទាត់ប្រាក់' : 'រង់ចាំការទូទាត់...'}
           </Button>
 
           {/* Security Notice */}

@@ -343,6 +343,145 @@ app.get('/api/test', (req, res) => {
   });
 });
 
+// In-memory storage for transactions (use database in production)
+const transactions = new Map();
+
+/**
+ * Create KHQR Payment Request
+ * This integrates with ABA Bank's API to generate dynamic QR
+ */
+app.post('/api/khqr/create', async (req, res) => {
+console.log('\n========== CREATE KHQR PAYMENT ==========');
+  
+  try {
+ const { orderId, amount, currency } = req.body;
+   
+  if (!orderId || !amount) {
+  return res.status(400).json({
+   status: 'error',
+    message: 'Missing required fields: orderId, amount'
+    });
+  }
+   
+console.log(`📝 Creating payment for Order: ${orderId}, Amount: ${amount} ${currency}`);
+   
+  // TODO: Integrate with actual ABA Bank API here
+  // This is where you call ABA's API to create the payment
+  // Example:
+  // const abaResponse = await axios.post('https://checkout-sandbox.payway.com.kh/api/v1.0/qr-gen', {
+  //  acquirerId: process.env.ABA_ACQUIRER_ID,
+  //  amount: amount,
+  //  currency: currency,
+  //  merchantRefNo: orderId
+  // }, {
+  //  headers: {
+  //     'Authorization': `Bearer ${process.env.ABA_ACCESS_TOKEN}`
+  //   }
+  // });
+   
+  // For now, simulate response
+const transactionId = `TXN-${Date.now()}`;
+  
+  // Store transaction
+  transactions.set(transactionId, {
+  orderId,
+  amount,
+  currency,
+  status: 'PENDING',
+  createdAt: new Date()
+  });
+   
+  // Simulated KHQR string (in production, this comes from ABA API)
+const qrString = `KHQR|${transactionId}|${amount}|${currency}|${orderId}`;
+   
+console.log(`✅ Created transaction: ${transactionId}`);
+   
+  res.json({
+  status: 'success',
+  transactionId,
+    qrString,
+  amount,
+  orderId
+  });
+  } catch (error) {
+console.error('❌ Error creating KHQR:', error.message);
+  res.status(500).json({
+  status: 'error',
+  message: 'Failed to create KHQR',
+    error: error.message
+  });
+  }
+});
+
+/**
+ * Get Payment Status
+ * Used for polling mechanism
+ */
+app.get('/api/khqr/status/:transactionId', async (req, res) => {
+  try {
+const { transactionId } = req.params;
+   
+const transaction = transactions.get(transactionId);
+   
+  if (!transaction) {
+  return res.status(404).json({
+   status: 'error',
+    message: 'Transaction not found'
+    });
+  }
+   
+  // In production, check with ABA Bank API for actual status
+  // For demo, randomly mark as paid after 5 seconds
+const timeSinceCreation = Date.now() - new Date(transaction.createdAt).getTime();
+  
+  if (timeSinceCreation> 5000 && transaction.status === 'PENDING') {
+  transaction.status = 'PAID';
+  transaction.paidAt = new Date();
+  transactions.set(transactionId, transaction);
+  }
+   
+  res.json({
+  status: transaction.status,
+  transactionId,
+    paidAt: transaction.paidAt ? transaction.paidAt.toISOString() : undefined
+  });
+  } catch (error) {
+console.error('❌ Error checking status:', error.message);
+  res.status(500).json({
+  status: 'error',
+  message: 'Failed to check payment status'
+  });
+  }
+});
+
+/**
+ * Cancel Payment
+ */
+app.post('/api/khqr/cancel', async (req, res) => {
+  try {
+const { transactionId } = req.body;
+   
+const transaction = transactions.get(transactionId);
+   
+  if (transaction && transaction.status === 'PENDING') {
+  transaction.status = 'CANCELLED';
+  transactions.set(transactionId, transaction);
+ console.log(`✅ Cancelled transaction: ${transactionId}`);
+  }
+   
+  res.json({
+  status: 'success',
+  message: 'Payment cancelled'
+  });
+  } catch (error) {
+console.error('❌ Error cancelling payment:', error.message);
+  res.status(500).json({
+  status: 'error',
+  message: 'Failed to cancel payment'
+  });
+  }
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log('\n╔════════════════════════════════════════════════════╗');
