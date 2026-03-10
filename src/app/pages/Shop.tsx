@@ -336,36 +336,11 @@ export function Shop() {
                     </span>
                   </div>
 
-                  {/* Quick Add Button - Always Visible */}
-                  <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 via-black/50 to-transparent">
-                    <button 
-                      onClick={(e) => handleAddToCart(e, product)}
-                      disabled={addedToCart === product.id}
-                      className={`w-full py-3 text-white text-xs tracking-widest transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 ${
-                        addedToCart === product.id
-                          ? 'bg-green-600 cursor-default'
-                          : 'bg-red-600 hover:bg-red-500'
-                      }`}
-                      style={{ fontFamily: "Impact, 'Arial Black', sans-serif" }}>
-                      {addedToCart === product.id ? (
-                        <>
-                          <span>✓</span>
-                          <span>ADDED!</span>
-                        </>
-                      ) : (
-                        <>
-                          <Plus size={14} />
-                          <span>ADD TO CART</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-
                   {/* Buy Now Button - Always Visible */}
                   <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 via-black/50 to-transparent">
                     <button 
-                      onClick={(e) => {
-                       e.stopPropagation();
+                    onClick={(e) => {
+                      e.stopPropagation();
                       handleBuyNow(product);
                        }}
                       disabled={addedToCart === product.id}
@@ -374,7 +349,7 @@ export function Shop() {
                           ? 'bg-green-600 cursor-default'
                           : 'bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700'
                       }`}
-                     style={{ fontFamily: "Impact, 'Arial Black', sans-serif" }}>
+                    style={{ fontFamily: "Impact, 'Arial Black', sans-serif" }}>
                       {addedToCart === product.id ? (
                         <>
                           <span>✓</span>
