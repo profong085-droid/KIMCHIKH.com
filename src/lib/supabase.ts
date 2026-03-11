@@ -10,6 +10,9 @@ let supabaseClient: ReturnType<typeof createClient> | null = null;
 if (supabaseUrl && supabaseAnonKey) {
   supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
 } else {
+  console.error(
+    'បាត់ Key! សូមឆែកមើល .env ឬ Vercel Settings → Environment Variables: VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY'
+  );
   console.warn(
     'Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your .env to enable auth and order persistence.'
   );
